@@ -66,16 +66,12 @@ void key_callback(
 ) {
 	if (action == GLFW_PRESS) {
 		if (key == GLFW_KEY_LEFT) {
-			speed_y = -PI/2;
 		}
 		if (key == GLFW_KEY_RIGHT) {
-			speed_y = PI/2;
 		}
 		if (key == GLFW_KEY_UP) {
-			speed_x = -PI/2;
 		}
 		if (key == GLFW_KEY_DOWN) {
-			speed_x = PI/2;
 		}
 	}
 	if (action == GLFW_RELEASE) {
@@ -149,10 +145,26 @@ void loadModel(std::string plik)
 		}
 		//cout << endl;
 	}
+
+	aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+	/*for (int i = 0; i < 19; i++)
+	{
+		std::cout << i << " " << material->GetTextureCount((aiTextureType)i) << std::endl;
+	}
+	*/
+
+	for (int i = 0; i < material->GetTextureCount(aiTextureType_DIFFUSE); i++) {
+		aiString str;//nazwa pliku
+
+		material->GetTexture(aiTextureType_DIFFUSE, i, &str);
+		std::cout << str.C_Str() << std::endl;
+	}
 }
 
 //Procedura inicjująca
 void initOpenGLProgram(GLFWwindow* window) {
+	initShaders();
 	//************Tutaj umieszczaj kod, który należy wykonać raz, na początku programu************
 	glClearColor(1, 1, 1, 1); //Ustaw kolor czyszczenia bufora kolorów
 	glEnable(GL_DEPTH_TEST); //Włącz test głębokości na pikselach
@@ -162,14 +174,11 @@ void initOpenGLProgram(GLFWwindow* window) {
 	sp = new ShaderProgram("v_simplest.glsl", NULL, "f_simplest.glsl");
 
 	tex = readTexture("wood2.png");
-	loadModel(std::string("models/pianobox.obj"));
-	// loadModel(std::string("models/pianocover.obj"));
 }
 
 
 //Zwolnienie zasobów zajętych przez program
 void freeOpenGLProgram(GLFWwindow* window) {
-	delete sp;
 	//************Tutaj umieszczaj kod, który należy wykonać po zakończeniu pętli głównej************
 	glDeleteTextures(1, &tex);
 }
@@ -178,32 +187,19 @@ void freeOpenGLProgram(GLFWwindow* window) {
 
 void pianoBox(glm::mat4 P, glm::mat4 V, glm::mat4 M) {
 
-	sp->use(); //Aktywuj program cieniujący
-
-	glUniformMatrix4fv(sp->u("P"), 1, false, glm::value_ptr(P)); //Załaduj do programu cieniującego macierz rzutowania
-	glUniformMatrix4fv(sp->u("V"), 1, false, glm::value_ptr(V)); //Załaduj do programu cieniującego macierz widoku
-	glUniformMatrix4fv(sp->u("M"), 1, false, glm::value_ptr(M)); //Załaduj do programu cieniującego macierz modelu
 
 
-	glEnableVertexAttribArray(sp->a("vertex"));
-	glVertexAttribPointer(sp->a("vertex"), 4, GL_FLOAT, false, 0, verts.data()); //Współrzędne wierzchołków bierz z tablicy myCubeVertices
 
-	glEnableVertexAttribArray(sp->a("texCoord"));
-	glVertexAttribPointer(sp->a("texCoord"), 2, GL_FLOAT, false, 0, texCoords.data()); //Współrzędne teksturowania bierz z tablicy myCubeTexCoords
 
-	glEnableVertexAttribArray(sp->a("normal"));
-	glVertexAttribPointer(sp->a("normal"), 4, GL_FLOAT, false, 0, norms.data()); //Wektory normalne bierz z tablicy myCubeNormals
+
 
 	glUniform1i(sp->u("tex"), 0);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, tex);
 
-
+	//glDrawArrays(GL_TRIANGLES, 0, myCubeVertexCount);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, indices.data());
 
-	glDisableVertexAttribArray(sp->a("vertex"));
-	glDisableVertexAttribArray(sp->a("texCoord"));
-	glDisableVertexAttribArray(sp->a("normal"));
 }
 
 
@@ -217,6 +213,8 @@ void drawScene(GLFWwindow* window, float angle_x, float angle_y) {
 	M = glm::rotate(M, angle_x, glm::vec3(1.0f, 0.0f, 0.0f)); //Pomnóż macierz modelu razy macierz obrotu o kąt angle wokół osi X
 	glm::mat4 V = glm::lookAt(glm::vec3(0.0f, 0.0f, -7.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f)); //Wylicz macierz widoku
 	glm::mat4 P = glm::perspective(glm::radians(50.0f), 1.0f, 1.0f, 50.0f); //Wylicz macierz rzutowania
+
+
 	
 	pianoBox(P, V, M);
 
